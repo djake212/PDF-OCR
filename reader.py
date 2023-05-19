@@ -1,0 +1,48 @@
+
+# import libraries
+import ocrmypdf
+import pandas as pd
+import fitz #!pip install PyMuPDF
+import os
+
+# get pdf files
+PATH = os.getcwd()
+file_list = [f for f in os.listdir(path=PATH) if f.endswith('.pdf') or f.endswith('.PDF')]
+
+'''
+main ocr code, which create new pdf file with OCR_ ahead its origin filename, 
+and error messege can be find in error_log
+'''
+
+error_log = {}
+for file in file_list:
+    try:
+        result = ocrmypdf.ocr(file, 'OCR_'+file,output_type='pdf',skip_text=True,deskew=True)
+
+    except Exception as e:
+        if hasattr(e,'message'):
+            error_log[file] = e.message
+        else:
+            error_log[file] = e
+        continue
+        
+'''
+extract OCRed PDF using PyMuPDF and save into a pandas dataframe
+'''
+ocr_file_list = [f for f in os.listdir(path=PATH) if f.startswith('OCR_') ]
+
+# PDF extraction
+# informations we want to extract
+extraction_pdfs = {}
+print(ocr_file_list)
+for file in ocr_file_list:
+    #save the results
+    pages_df = pages_df = pd.DataFrame(columns=['text'])
+    # file reader
+    doc = fitz.open(file)
+    for page_num in range(doc.page_count):
+        page = doc.load_page(page_num)
+        pages_df = pages_df._append({'text': page.get_text('text')}, ignore_index=True)
+        
+        
+    extraction_pdfs[file] = pages_df  
